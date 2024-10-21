@@ -13,7 +13,7 @@ Resources:
       CidrBlock: 172.31.0.0/16
       Tags:
         - Key: Name
-          Value: FridayHITTVPC
+          Value: FridayHITTVPCNEW
 
   PublicSubnet:
     Type: AWS::EC2::Subnet
@@ -27,3 +27,16 @@ Resources:
       Tags:
         - Key: Name
           Value: PublicSubnet
+  
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref FridayHITTVPC
+      CidrBlock: 172.31.2.0/24
+      MapPublicIpOnLaunch: false
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs eu-west-1
+      Tags:
+        - Key: Name
+          Value: PrivateSubNet
