@@ -115,7 +115,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupName: "public-security-group"
-      GroupDescription: "Allow HTTP and SSH inbound and outbound traffic"
+      GroupDescription: "Allow traffic inbound and outbound"
       VpcId: !Ref FridayHITTVPC
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -135,7 +135,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupName: "private-security-group"
-      GroupDescription: "Allow HTTP/HTTPS and SSH inbound and outbound traffic"
+      GroupDescription: "Allow traffic in from public subnet"
       VpcId: !Ref FridayHITTVPC
       SecurityGroupIngress:
         - IpProtocol: tcp
