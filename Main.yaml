@@ -1,0 +1,16 @@
+Description:  A small company FridayHITT provide customised different HITT training every Friday with running
+              routes local to your location. They have approached you to design a mini network for the online
+              presence. They can see that the company will expand rapidly so they want the design to be extensible
+              from the start. They know that applying good practices from the start will make this easier. Provide
+              appropriate services and documentation to get them going.
+
+Resources:
+  FridayHITTVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 172.31.0.0/16
+      Tags:
+       - Key: name
+         Value: fridayhittvpc
+   
+  
