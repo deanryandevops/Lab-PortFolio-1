@@ -6,6 +6,27 @@ Description: A small company FridayHITT provide customised different HITT
   make this easier. Provide appropriate services and documentation to get them
   going.
 
+Parameters:
+
+  KeyPairName:
+    Type: String
+    Description: Key/Pair for instance
+    Default: FridayHIITKeyPair
+  
+  AmiID:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Description: "The ID of the AMI."
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+  
+  TypeOfInstance:
+    Description: "Specify the Instance Type."
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.nano
+      - t2.micro
+      - t2.small
+
 Resources:
   FridayHITTVPC:
     Type: AWS::EC2::VPC
@@ -14,7 +35,7 @@ Resources:
       Tags:
         - Key: Name
           Value: FridayHITTVPC
-
+  
   PublicSubnet:
     Type: AWS::EC2::Subnet
     Properties:
@@ -27,7 +48,7 @@ Resources:
       Tags:
         - Key: Name
           Value: PublicSubnet
-  
+
   PrivateSubnet:
     Type: AWS::EC2::Subnet
     Properties:
@@ -40,3 +61,132 @@ Resources:
       Tags:
         - Key: Name
           Value: PrivateSubNet
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: InternetGateway
+
+  # Attach Internet Gateway to the VPC
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref FridayHITTVPC
+    DependsOn: FridayHITTVPC  # Ensure that the VPC is created first
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref FridayHITTVPC
+      Tags:
+        - Key: Name
+          Value: Public_RouteTable
+
+  # Route in Public Route Table to allow internet traffic
+  MainRouteTableInternetGatewayAttachement:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  # Private Route Table
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref FridayHITTVPC
+      Tags:
+        - Key: Name
+          Value: Private_RouteTable
+
+  # Associate Private Subnet 1 with Private Route Table
+  PrivateSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnet
+
+  # Security Group for public instances
+  PublicSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: "public-security-group"
+      GroupDescription: "Allow HTTP and SSH inbound and outbound traffic"
+      VpcId: !Ref FridayHITTVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: public-security-group
+
+  # Security Group for private instances
+  PrivateSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: "private-security-group"
+      GroupDescription: "Allow HTTP/HTTPS and SSH inbound and outbound traffic"
+      VpcId: !Ref FridayHITTVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: private-security-group
+
+  PublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet
+  
+  PublicInstance:
+    Type: AWS::EC2::Instance
+    DependsOn: PublicSecurityGroup
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      ImageId: !Ref AmiID
+      InstanceType: !Ref TypeOfInstance
+      KeyName: !Ref KeyPairName
+      SecurityGroupIds:
+        - !Ref PublicSecurityGroup
+      Tags:
+        - Key: Name
+          Value: public_instance
+
+  PrivateInstance:
+    Type: AWS::EC2::Instance
+    DependsOn: PrivateSecurityGroup
+    Properties:
+      SubnetId: !Ref PrivateSubnet
+      ImageId: !Ref AmiID
+      InstanceType: !Ref TypeOfInstance
+      KeyName: !Ref KeyPairName
+      SecurityGroupIds:
+        - !Ref PrivateSecurityGroup
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs eu-west-1
+      Tags:
+        - Key: Name
+          Value: privateInstance
