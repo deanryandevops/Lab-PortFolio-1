@@ -31,7 +31,7 @@ Resources:
   FridayHITTVPC:
     Type: AWS::EC2::VPC
     Properties:
-      CidrBlock: 172.31.0.0/16
+      CidrBlock: 10.0.0.0/16
       Tags:
         - Key: Name
           Value: FridayHITTVPC
@@ -40,7 +40,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref FridayHITTVPC
-      CidrBlock: 172.31.1.0/24
+      CidrBlock: 10.0.1.0/24
       MapPublicIpOnLaunch: true
       AvailabilityZone: !Select
         - 0
@@ -53,7 +53,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref FridayHITTVPC
-      CidrBlock: 172.31.2.0/24
+      CidrBlock: 10.0.2.0/24
       MapPublicIpOnLaunch: false
       AvailabilityZone: !Select
         - 0
@@ -119,12 +119,12 @@ Resources:
       VpcId: !Ref FridayHITTVPC
       SecurityGroupIngress:
         - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
           CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
@@ -135,21 +135,13 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupName: "private-security-group"
-      GroupDescription: "Allow traffic in from public subnet"
+      GroupDescription: "Allow traffic in from public subnet IP only"
       VpcId: !Ref FridayHITTVPC
       SecurityGroupIngress:
         - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: 0.0.0.0/0
+          CidrIp: 10.0.1.0/24
       Tags:
         - Key: Name
           Value: private-security-group
