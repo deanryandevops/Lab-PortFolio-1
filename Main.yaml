@@ -28,6 +28,7 @@ Parameters:
       - t2.small
 
 Resources:
+  # VPC
   FridayHITTVPC:
     Type: AWS::EC2::VPC
     Properties:
@@ -35,7 +36,8 @@ Resources:
       Tags:
         - Key: Name
           Value: FridayHITTVPC
-  
+
+  # Subnets
   PublicSubnet:
     Type: AWS::EC2::Subnet
     Properties:
@@ -61,7 +63,8 @@ Resources:
       Tags:
         - Key: Name
           Value: PrivateSubNet
-
+ 
+  # Internet Gateway
   InternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:
@@ -69,7 +72,6 @@ Resources:
         - Key: Name
           Value: InternetGateway
 
-  # Attach Internet Gateway to the VPC
   InternetGatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
@@ -77,6 +79,7 @@ Resources:
       VpcId: !Ref FridayHITTVPC
     DependsOn: FridayHITTVPC  # Ensure that the VPC is created first
 
+  #Route Tables
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
@@ -103,25 +106,27 @@ Resources:
         - Key: Name
           Value: Private_RouteTable
 
-  # Associate Private Subnet 1 with Private Route Table
+  # Associate Private Subnet with Private Route Table
   PrivateSubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       RouteTableId: !Ref PrivateRouteTable
       SubnetId: !Ref PrivateSubnet
+  
+  # Security Groups 
 
   # Security Group for public instances
   PublicSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupName: "public-security-group"
-      GroupDescription: "Allow traffic inbound and outbound"
+      GroupDescription: "Allow traffic inbound for ssh on public subnet and https and allow all outbound"
       VpcId: !Ref FridayHITTVPC
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: 0.0.0.0/0
+          CidrIp: 10.0.1.0/24
         - IpProtocol: tcp
           FromPort: 443
           ToPort: 443
@@ -129,6 +134,22 @@ Resources:
       Tags:
         - Key: Name
           Value: public-security-group
+
+  # Security Group for jump instances
+  JumpBoxSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: "jumobox-security-group"
+      GroupDescription: "Allow traffic only for SSH"
+      VpcId: !Ref FridayHITTVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: jumpbox-security-group
 
   # Security Group for private instances
   PrivateSecurityGroup:
@@ -152,6 +173,8 @@ Resources:
       RouteTableId: !Ref PublicRouteTable
       SubnetId: !Ref PublicSubnet
   
+  # EC2 Instances
+
   PublicInstance:
     Type: AWS::EC2::Instance
     DependsOn: PublicSecurityGroup
@@ -164,7 +187,21 @@ Resources:
         - !Ref PublicSecurityGroup
       Tags:
         - Key: Name
-          Value: public_instance
+          Value: public-instance
+  
+  JumpBoxInstance:
+    Type: AWS::EC2::Instance
+    DependsOn: JumpBoxSecurityGroup
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      ImageId: !Ref AmiID
+      InstanceType: !Ref TypeOfInstance
+      KeyName: !Ref KeyPairName
+      SecurityGroupIds:
+        - !Ref JumpBoxSecurityGroup
+      Tags:
+        - Key: Name
+          Value: jumpbox-instance
 
   PrivateInstance:
     Type: AWS::EC2::Instance
