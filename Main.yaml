@@ -12,12 +12,7 @@ Parameters:
     Type: String
     Description: Key/Pair for instance
     Default: FridayHIITKeyPair
-  
-  AmiID:
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Description: "The ID of the AMI."
-    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
-  
+
   TypeOfInstance:
     Description: "Specify the Instance Type."
     Type: String
@@ -26,6 +21,19 @@ Parameters:
       - t2.nano
       - t2.micro
       - t2.small
+
+Mappings:
+  AMIIDMap:
+    eu-west-1:
+      MyAMI1: "ami-00385a401487aefa4"
+      MyAMI2: "ami-094054baa258aef8c"
+    eu-west-2:
+      MyAMI1: "ami-0d64bb532e0502c46"
+      MyAMI2: "ami-094054baa258aef8c"
+    eu-south-3:
+      MyAMI1: "ami-00385a401487aefa4"
+      MyAMI2: "ami-0d64bb532e0502c46"
+
 
 Resources:
   # VPC
@@ -180,7 +188,7 @@ Resources:
     DependsOn: PublicSecurityGroup
     Properties:
       SubnetId: !Ref PublicSubnet
-      ImageId: !Ref AmiID
+      ImageId: !FindInMap [AMIIDMap, !Ref "AWS::Region", MyAMI1]
       InstanceType: !Ref TypeOfInstance
       KeyName: !Ref KeyPairName
       SecurityGroupIds:
@@ -194,7 +202,7 @@ Resources:
     DependsOn: JumpBoxSecurityGroup
     Properties:
       SubnetId: !Ref PublicSubnet
-      ImageId: !Ref AmiID
+      ImageId: !FindInMap [AMIIDMap, !Ref "AWS::Region", MyAMI1]
       InstanceType: !Ref TypeOfInstance
       KeyName: !Ref KeyPairName
       SecurityGroupIds:
@@ -208,7 +216,7 @@ Resources:
     DependsOn: PrivateSecurityGroup
     Properties:
       SubnetId: !Ref PrivateSubnet
-      ImageId: !Ref AmiID
+      ImageId: !FindInMap [AMIIDMap, !Ref "AWS::Region", MyAMI1]
       InstanceType: !Ref TypeOfInstance
       KeyName: !Ref KeyPairName
       SecurityGroupIds:
