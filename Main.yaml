@@ -11,10 +11,10 @@ Parameters:
   KeyPairName:
     Type: String
     Description: Key/Pair for instance
-    Default: FridayHIITKeyPair
+    Default: FridayHIITKeyPair # Key pair I am using to instances
 
-  TypeOfInstance:
-    Description: "Specify the Instance Type."
+  TypeOfInstance: # Giving the stack template user a option for different Types of instances
+    Description: "Specify the Instance Type." 
     Type: String
     Default: t2.micro
     AllowedValues:
@@ -22,7 +22,7 @@ Parameters:
       - t2.micro
       - t2.small
 
-Mappings:
+Mappings: # mappings that include different availability zones if present for region AMi
   AMIIDMap:
     eu-west-1:
       MyAMI1: "ami-00385a401487aefa4"
@@ -36,7 +36,7 @@ Mappings:
 
 
 Resources:
-  # VPC
+  # VPC 
   FridayHITTVPC:
     Type: AWS::EC2::VPC
     Properties:
@@ -80,6 +80,7 @@ Resources:
         - Key: Name
           Value: InternetGateway
 
+  # Internet Gateway attachment
   InternetGatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
@@ -130,12 +131,12 @@ Resources:
       GroupName: "public-security-group"
       GroupDescription: "Allow traffic inbound for ssh on public subnet and https and allow all outbound"
       VpcId: !Ref FridayHITTVPC
-      SecurityGroupIngress:
-        - IpProtocol: tcp
+      SecurityGroupIngress: # this is inbounds configuration
+        - IpProtocol: tcp # SSH 
           FromPort: 22
           ToPort: 22
           CidrIp: 10.0.1.0/24
-        - IpProtocol: tcp
+        - IpProtocol: tcp # HTTPS
           FromPort: 443
           ToPort: 443
           CidrIp: 0.0.0.0/0
@@ -151,7 +152,7 @@ Resources:
       GroupDescription: "Allow traffic only for SSH"
       VpcId: !Ref FridayHITTVPC
       SecurityGroupIngress:
-        - IpProtocol: tcp
+        - IpProtocol: tcp # SSH
           FromPort: 22
           ToPort: 22
           CidrIp: 0.0.0.0/0
@@ -167,7 +168,7 @@ Resources:
       GroupDescription: "Allow traffic in from public subnet IP only"
       VpcId: !Ref FridayHITTVPC
       SecurityGroupIngress:
-        - IpProtocol: tcp
+        - IpProtocol: tcp #SSH
           FromPort: 22
           ToPort: 22
           CidrIp: 10.0.1.0/24
